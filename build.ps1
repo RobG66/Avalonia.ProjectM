@@ -23,11 +23,10 @@
     the GitHub release produced by the build-natives.yml CI workflow
     (see lib/README.md for instructions).
 
-    The managed JukeboxVisualizations.dll is pure IL — identical for
-    every platform. We run `dotnet publish` for both win-x64 and
-    linux-x64 RIDs (so the RID-specific .deps.json is generated), but
-    only stage the managed DLL from one of them. The native binaries
-    are copied verbatim from the source `lib/` folder.
+    JukeboxVisualizations.dll is pure IL — identical on every platform.
+    We use `dotnet build` (not `dotnet publish`) so only the project's own
+    DLL and deps.json land in bin/Release/net10.0/, with no transitive
+    Avalonia or Silk.NET DLLs copied alongside.
 
 .NOTES
     Run from the Jukebox-Visualizations project root (next to
@@ -46,8 +45,6 @@ if (-not (Test-Path "JukeboxVisualizations.csproj")) {
     Write-Host "       Run this script from the Jukebox-Visualizations project root." -ForegroundColor Red
     exit 1
 }
-
-
 
 $sourceLib = ".\lib"
 
@@ -79,49 +76,31 @@ if (Test-Path "./publish") {
 New-Item -ItemType Directory -Force -Path "./publish/stage" | Out-Null
 Write-Host ""
 
-# ── Windows x64 build ──────────────────────────────────────────────────
-Write-Host "Building Windows x64..." -ForegroundColor Cyan
-Write-Host "-----------------------" -ForegroundColor Cyan
+# ── Build managed wrapper ───────────────────────────────────────────────
+# JukeboxVisualizations.dll is pure IL — identical on every platform.
+# dotnet build (not publish) keeps the output clean: only the project's
+# own DLL and deps.json land in bin/Release/net10.0/, with no transitive
+# Avalonia or Silk.NET DLLs copied alongside.
+Write-Host "Building JukeboxVisualizations.dll..." -ForegroundColor Cyan
+Write-Host "--------------------------------------" -ForegroundColor Cyan
 
-dotnet publish "JukeboxVisualizations.csproj" `
+dotnet build "JukeboxVisualizations.csproj" `
     --configuration Release `
-    --runtime win-x64 `
-    --self-contained false `
-    --output "./publish/win-x64" `
     -p:DebugType=None `
     -p:DebugSymbols=false
 
-$winSuccess = ($LASTEXITCODE -eq 0)
-Write-Host ""
-
-# ── Linux x64 build ────────────────────────────────────────────────────
-Write-Host "Building Linux x64..." -ForegroundColor Cyan
-Write-Host "---------------------" -ForegroundColor Cyan
-
-dotnet publish "JukeboxVisualizations.csproj" `
-    --configuration Release `
-    --runtime linux-x64 `
-    --self-contained false `
-    --output "./publish/linux-x64" `
-    -p:DebugType=None `
-    -p:DebugSymbols=false
-
-$linuxSuccess = ($LASTEXITCODE -eq 0)
-Write-Host ""
-
-if (-not $winSuccess -or -not $linuxSuccess) {
+if ($LASTEXITCODE -ne 0) {
     Write-Host "================================" -ForegroundColor Red
     Write-Host "Build FAILED - staging skipped." -ForegroundColor Red
-    if (-not $winSuccess)   { Write-Host "  Windows x64 : FAILED" -ForegroundColor Red }
-    if (-not $linuxSuccess) { Write-Host "  Linux x64   : FAILED" -ForegroundColor Red }
     exit 1
 }
+Write-Host ""
 
 # ── Stage into publish/stage/ ──────────────────────────────────────────
 Write-Host "Staging into ./publish/stage/..." -ForegroundColor Cyan
 Write-Host "--------------------------------" -ForegroundColor Cyan
 
-$dest = "./publish/stage"
+$dest   = "./publish/stage"
 $dstLib = Join-Path $dest "lib"
 New-Item -ItemType Directory -Force -Path $dstLib | Out-Null
 
@@ -135,16 +114,16 @@ else {
     Write-Host "  Skipped native libs: source lib/ is empty" -ForegroundColor Yellow
 }
 
-# 2) Managed wrapper — same DLL for both platforms; copy from the win-x64
-#    build (arbitrary choice). Also copy deps.json so the runtime can
-#    resolve its Avalonia + Silk.NET dependencies when loaded via
-#    Assembly.LoadFrom. Lives in <dest>/lib/ alongside the native
-#    libprojectM binary — all optional drop-in files in one place.
+# 2) Managed wrapper — copy from the build output (bin/Release/net10.0/).
+#    Also copy deps.json so the runtime can resolve Avalonia + Silk.NET
+#    dependencies when loaded via Assembly.LoadFrom. Lives in <dest>/lib/
+#    alongside the native libprojectM binary.
+$buildOutput = "./bin/Release/net10.0"
 foreach ($file in @(
     "JukeboxVisualizations.dll",
     "JukeboxVisualizations.deps.json"
 )) {
-    $src = Join-Path "./publish/win-x64" $file
+    $src = Join-Path $buildOutput $file
     if (Test-Path $src) {
         Copy-Item $src -Destination $dstLib -Force
         Write-Host "  Copied: lib/$file" -ForegroundColor Gray

@@ -4,6 +4,11 @@
 # drop-in layout suitable for placing next to Jukebox.exe.
 # Bash equivalent of build.ps1 for Linux/macOS developers.
 #
+# JukeboxVisualizations.dll is pure IL — identical on every platform.
+# We use `dotnet build` (not `dotnet publish`) so only the project's own
+# DLL and deps.json land in bin/Release/net10.0/, with no transitive
+# Avalonia or Silk.NET DLLs copied alongside.
+#
 # Run from the Jukebox-Visualizations project root (next to
 # JukeboxVisualizations.csproj).
 #
@@ -55,32 +60,20 @@ rm -rf ./publish
 mkdir -p ./publish/stage
 echo ""
 
-# ── Windows x64 build ───────────────────────────────────────────────
-echo "Building Windows x64..."
-echo "-----------------------"
+# ── Build managed wrapper ──────────────────────────────────────────────────
+echo "Building JukeboxVisualizations.dll..."
+echo "--------------------------------------"
 
-dotnet publish "JukeboxVisualizations.csproj" \
+dotnet build "JukeboxVisualizations.csproj" \
     --configuration Release \
-    --runtime win-x64 \
-    --self-contained false \
-    --output "./publish/win-x64" \
     -p:DebugType=None \
     -p:DebugSymbols=false
 
-echo ""
-
-# ── Linux x64 build ─────────────────────────────────────────────────
-echo "Building Linux x64..."
-echo "---------------------"
-
-dotnet publish "JukeboxVisualizations.csproj" \
-    --configuration Release \
-    --runtime linux-x64 \
-    --self-contained false \
-    --output "./publish/linux-x64" \
-    -p:DebugType=None \
-    -p:DebugSymbols=false
-
+if [ $? -ne 0 ]; then
+    echo "================================" >&2
+    echo "Build FAILED - staging skipped." >&2
+    exit 1
+fi
 echo ""
 
 # ── Stage into publish/stage/ ───────────────────────────────────────
@@ -105,14 +98,13 @@ else
     echo "  Skipped native libs: source lib/ is empty"
 fi
 
-# 2) Managed wrapper — same DLL for both platforms; copy from win-x64.
+# 2) Managed wrapper — copy from the build output (bin/Release/net10.0/).
 #    Also copy deps.json so the runtime can resolve Avalonia + Silk.NET
-#    dependencies when loaded via Assembly.LoadFrom. Lives in <dest>/lib/
-#    alongside the native libprojectM binary — all optional drop-in files
-#    in one place.
+#    dependencies when loaded via Assembly.LoadFrom.
+build_output="./bin/Release/net10.0"
 for file in JukeboxVisualizations.dll JukeboxVisualizations.deps.json; do
-    if [[ -f "./publish/win-x64/$file" ]]; then
-        cp "./publish/win-x64/$file" "$DEST/lib/"
+    if [[ -f "$build_output/$file" ]]; then
+        cp "$build_output/$file" "$DEST/lib/"
         echo "  Copied: lib/$file"
     fi
 done
