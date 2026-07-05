@@ -16,8 +16,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-echo "Building Jukebox-Visualizations"
-echo "================================"
+echo "Building Jukebox-Visualizations - Windows x64 & Linux x64"
+echo "========================================================="
 echo ""
 
 # ── Validate source layout ──────────────────────────────────────────
@@ -43,7 +43,7 @@ fi
 if [[ "$lib_populated" != "true" ]]; then
     echo "WARNING: lib/ is empty or missing."
     echo "         The build will succeed but native libprojectM binaries"
-    echo "         will not be staged in the drop-in zip."
+    echo "         will not be staged in the drop-in zips."
     echo ""
     echo "         To populate lib/:"
     echo "           1. Go to https://github.com/RobG66/Jukebox-Visualizations/releases"
@@ -56,95 +56,137 @@ fi
 # ── Clean previous builds ───────────────────────────────────────────
 echo "Cleaning previous builds..."
 dotnet clean "JukeboxVisualizations.csproj" --configuration Release >/dev/null 2>&1 || true
-rm -rf ./publish
-mkdir -p ./publish/stage
+rm -rf ./publish/win-x64 ./publish/linux-x64 ./publish/stage
+rm -f ./publish/Jukebox-Visualizations-win-x64-dropin.zip ./publish/Jukebox-Visualizations-linux-x64-dropin.zip ./publish/Jukebox-Visualizations-dropin.zip
 echo ""
 
-# ── Build managed wrapper ──────────────────────────────────────────────────
-echo "Building JukeboxVisualizations.dll..."
-echo "--------------------------------------"
+# ── Build managed wrappers for both runtimes ─────────────────────────────
+# JukeboxVisualizations.dll is pure IL — identical on every platform.
+# We build for both RIDs so the RID-specific deps.json is generated.
 
+# --- Windows x64 ---
+echo "Building Windows x64..."
+echo "-----------------------"
 dotnet build "JukeboxVisualizations.csproj" \
     --configuration Release \
+    --runtime win-x64 \
     -p:DebugType=None \
     -p:DebugSymbols=false
+win_success=$?
+echo ""
 
-if [ $? -ne 0 ]; then
+# --- Linux x64 ---
+echo "Building Linux x64..."
+echo "---------------------"
+dotnet build "JukeboxVisualizations.csproj" \
+    --configuration Release \
+    --runtime linux-x64 \
+    -p:DebugType=None \
+    -p:DebugSymbols=false
+linux_success=$?
+echo ""
+
+if [ $win_success -ne 0 ] || [ $linux_success -ne 0 ]; then
     echo "================================" >&2
     echo "Build FAILED - staging skipped." >&2
     exit 1
 fi
 echo ""
 
-# ── Stage into publish/stage/ ───────────────────────────────────────
-echo "Staging into ./publish/stage/..."
-echo "--------------------------------"
+# ── Stage into publish/ ─────────────────────────────────────────────
+echo "Staging into publish/..."
+echo "------------------------"
 
-DEST="./publish/stage"
-mkdir -p "$DEST/lib"
+for rid in win-x64 linux-x64; do
+    dest="./publish/$rid"
+    dst_lib="$dest/lib"
+    mkdir -p "$dst_lib"
 
-# 1) Native libraries from the source lib/ folder — flat, all platforms
-#    coexist by extension. Goes into <dest>/lib/.
-if [[ "$lib_populated" == "true" ]]; then
-    for entry in "$SOURCE_LIB"/*; do
-        name="$(basename "$entry")"
-        case "$name" in
-            README.md|.gitignore) continue ;;
-        esac
-        cp -r "$entry" "$DEST/lib/"
-    done
-    echo "  Copied native libs: lib/"
-else
-    echo "  Skipped native libs: source lib/ is empty"
-fi
-
-# 2) Managed wrapper — copy from the build output (bin/Release/net10.0/).
-#    Also copy deps.json so the runtime can resolve Avalonia + Silk.NET
-#    dependencies when loaded via Assembly.LoadFrom.
-build_output="./bin/Release/net10.0"
-for file in JukeboxVisualizations.dll JukeboxVisualizations.deps.json; do
-    if [[ -f "$build_output/$file" ]]; then
-        cp "$build_output/$file" "$DEST/lib/"
-        echo "  Copied: lib/$file"
-    fi
-done
-
-# 3) ProjectM preset data copy has been disabled to prevent long build times and large ZIP sizes.
-
-echo ""
-
-# ── Summary ─────────────────────────────────────────────────────────
-echo "================================"
-echo "Stage Complete"
-echo "================================"
-echo ""
-echo "Drop-in layout staged at:"
-echo "  $(cd "$DEST" && pwd)"
-echo ""
-echo "Layout:"
-( cd "$DEST" && find . -maxdepth 2 -print | sort | while read -r p; do
-    p="${p#./}"
-    [[ -z "$p" ]] && continue
-    if [[ -d "$DEST/$p" ]]; then
-        echo "  [DIR] $p"
+    # 1) Native libraries from the source lib/ folder
+    if [[ "$lib_populated" == "true" ]]; then
+        for entry in "$SOURCE_LIB"/*; do
+            name="$(basename "$entry")"
+            case "$name" in
+                README.md|.gitignore) continue ;;
+            esac
+            
+            # Clean up platform-incompatible native binaries
+            if [ "$rid" = "win-x64" ]; then
+                # Exclude Linux/macOS binaries
+                case "$name" in
+                    *.so|*.so.*|*.dylib) continue ;;
+                esac
+            elif [ "$rid" = "linux-x64" ]; then
+                # Exclude Windows binaries
+                case "$name" in
+                    *.dll|*.pdb|*.exe) continue ;;
+                esac
+            fi
+            
+            cp -r "$entry" "$dst_lib/"
+        done
+        echo "  Staged native libs for $rid"
     else
-        echo "        $p"
+        echo "  Skipped native libs for $rid: source lib/ is empty"
     fi
-done )
+
+    # 2) Managed wrapper — copy from the build output (bin/Release/net10.0/<rid>/).
+    build_output="./bin/Release/net10.0/$rid"
+    for file in JukeboxVisualizations.dll JukeboxVisualizations.deps.json; do
+        if [[ -f "$build_output/$file" ]]; then
+            cp "$build_output/$file" "$dst_lib/"
+            echo "  Copied for $rid: lib/$file"
+        fi
+    done
+
+    # 3) ProjectM preset data copy has been disabled to prevent long build times and large ZIP sizes.
+done
 echo ""
 
 # ── Zip for distribution ────────────────────────────────────────────
-zip_path="./publish/Jukebox-Visualizations-dropin.zip"
-rm -f "$zip_path"
-( cd "$DEST" && zip -r "$OLDPWD/$zip_path" . >/dev/null )
-echo "Zip created:"
-echo "  $(cd "$(dirname "$zip_path")" && pwd)/$(basename "$zip_path")"
-zip_size=$(du -m "$zip_path" | cut -f1)
-echo "  Size: ${zip_size} MB"
+echo "Creating zip packages..."
+echo "------------------------"
+
+for rid in win-x64 linux-x64; do
+    dest="./publish/$rid"
+    zip_path="./publish/Jukebox-Visualizations-$rid-dropin.zip"
+    rm -f "$zip_path"
+    
+    if [[ -d "$dest" ]]; then
+        ( cd "$dest" && zip -r "$OLDPWD/$zip_path" . >/dev/null )
+        echo "Zip created for $rid:"
+        echo "  $(cd "$(dirname "$zip_path")" && pwd)/$(basename "$zip_path")"
+        
+        if command -v du >/dev/null 2>&1; then
+            zip_size=$(du -m "$zip_path" | cut -f1)
+            echo "  Size: ${zip_size} MB"
+        fi
+    fi
+done
 echo ""
+
+# ── Summary ─────────────────────────────────────────────────────────
+echo "========================================================="
+echo "Stage & Zip Complete"
+echo "========================================================="
+echo ""
+
+if [ $win_success -eq 0 ]; then
+    echo "  Windows x64 : OK -> ./publish/Jukebox-Visualizations-win-x64-dropin.zip"
+else
+    echo "  Windows x64 : FAILED"
+fi
+
+if [ $linux_success -eq 0 ]; then
+    echo "  Linux x64   : OK -> ./publish/Jukebox-Visualizations-linux-x64-dropin.zip"
+else
+    echo "  Linux x64   : FAILED"
+fi
+echo ""
+
 echo "To enable visualizations in Jukebox:"
 echo "  1. Unzip the archive into your Jukebox build output directory"
-echo "     (next to Jukebox.exe). The result is:"
+echo "     (next to Jukebox or Jukebox.exe). The result is:"
 echo "         lib/                          (wrapper + native runtimes)"
 echo "  2. Also drop Jukebox's own native runtimes (bass.dll, libmpv-2.dll"
 echo "     or libbass.so, libmpv.so.2) into the same lib/ folder."
