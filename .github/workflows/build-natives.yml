@@ -37,7 +37,7 @@
 # ── Updating the libprojectM version ─────────────────────────────────
 # To build a newer version of libprojectM:
 #   1. Edit PROJECTM_REF below to point at the new upstream tag, branch,
-#      or commit hash (e.g. 'v4.1.6' or a specific commit SHA).
+#      or commit hash (e.g. 'v4.1.7' or a specific commit SHA).
 #   2. Commit and push this workflow file.
 #   3. Trigger the workflow manually (workflow_dispatch) or push a new
 #      natives-v* tag.
@@ -62,7 +62,7 @@ on:
 # it to a specific tag or commit for reproducibility. Bump this when
 # you want to build a newer version of libprojectM.
 env:
-  PROJECTM_REF: 'v4.1.6'  # https://github.com/projectM-visualizer/projectm/tags
+  PROJECTM_REF: 'v4.1.7'  # https://github.com/projectM-visualizer/projectm/tags
   PROJECTM_REPO: 'https://github.com/projectM-visualizer/projectm.git'
   # Clone into projectm-src/ (not projectm/) to avoid case-insensitive
   # filesystem collisions with the ProjectM/ preset folder that ships
@@ -410,7 +410,7 @@ jobs:
 
           # ── Native: libprojectM.so.4 ──
           # projectM 4.x names the shared library with the major version
-          # baked into the base name, e.g. `libprojectM-4.so.4.1.6` (note
+          # baked into the base name, e.g. `libprojectM-4.so.4.1.7` (note
           # the `-4` before `.so`). The Jukebox's ProjectMNative.cs loader
           # expects the file to be named `libprojectM.so.4`, so we find
           # the actual .so file (any variant) and copy it with that name.

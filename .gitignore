@@ -483,3 +483,4 @@ $RECYCLE.BIN/
 
 # Build scripts output
 publish/
+*.zip
