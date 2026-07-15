@@ -1,13 +1,13 @@
 using Avalonia;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
-using JukeboxVisualizations.Native;
+using ProjectM.Avalonia.Native;
 using System;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using static Avalonia.OpenGL.GlConsts;
 
-namespace JukeboxVisualizations.Controls;
+namespace ProjectM.Avalonia.Controls;
 
 public class ProjectMControl : OpenGlControlBase
 {
@@ -220,7 +220,7 @@ public class ProjectMControl : OpenGlControlBase
     {
         try
         {
-            var renderScaling = Avalonia.Controls.TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
+            var renderScaling = global::Avalonia.Controls.TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
             int width = (int)Math.Max(1, Bounds.Width * renderScaling);
             int height = (int)Math.Max(1, Bounds.Height * renderScaling);
 
@@ -653,7 +653,7 @@ public class ProjectMControl : OpenGlControlBase
                     // wrong size for one frame on HiDPI displays until the
                     // _lastWidth != width check corrected it on the next
                     // frame.
-                    var renderScaling = Avalonia.Controls.TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
+                    var renderScaling = global::Avalonia.Controls.TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
                     int initialWidth = (int)Math.Max(1, Bounds.Width * renderScaling);
                     int initialHeight = (int)Math.Max(1, Bounds.Height * renderScaling);
                     ProjectMNative.projectm_set_window_size(_projectMHandle, (nuint)initialWidth, (nuint)initialHeight);

@@ -1,48 +1,42 @@
 <#
 .SYNOPSIS
-    Builds the Jukebox-Visualizations wrapper and stages a self-contained
-    drop-in layout suitable for placing next to Jukebox.exe.
+    Builds the ProjectM.Avalonia library and stages a self-contained
+    drop-in layout.
 
 .DESCRIPTION
     Produces a single staged folder at `./publish/stage/` containing:
 
         publish/stage/
-        ├── lib/                              (flat — all drop-in files)
-        │   ├── JukeboxVisualizations.dll     (managed wrapper)
-        │   ├── JukeboxVisualizations.deps.json
-        │   ├── libprojectM.dll               (Windows — from source lib/)
-        │   ├── libprojectM.so.4              (Linux   — from source lib/)
-        │   └── glew32.dll                    (Windows — from source lib/)
-        └── ProjectM/                         (preset data only)
-            ├── presets/
-            └── textures/
+        └── ProjectM.Avalonia/
+            ├── ProjectM.Avalonia.dll       (managed wrapper)
+            ├── ProjectM.Avalonia.deps.json
+            ├── libprojectM.dll             (Windows — from source lib/)
+            ├── libprojectM.so.4            (Linux   — from source lib/)
+            └── glew32.dll                  (Windows — from source lib/)
 
-    The user drops this entire `publish/stage/` content next to Jukebox.exe
-    to enable visualizations. The native lib/ folder is NOT shipped in this
-    repo — the developer populates `lib/` manually by downloading from
-    the GitHub release produced by the build-natives.yml CI workflow
-    (see lib/README.md for instructions).
+    The native lib/ folder is NOT shipped in this repo — the developer populates
+    `lib/` manually by downloading from the GitHub release produced by the 
+    build-natives.yml CI workflow (see lib/README.md for instructions).
 
-    JukeboxVisualizations.dll is pure IL — identical on every platform.
+    ProjectM.Avalonia.dll is pure IL — identical on every platform.
     We use `dotnet build` (not `dotnet publish`) so only the project's own
     DLL and deps.json land in bin/Release/net10.0/, with no transitive
     Avalonia or Silk.NET DLLs copied alongside.
 
 .NOTES
-    Run from the Jukebox-Visualizations project root (next to
-    JukeboxVisualizations.csproj).
+    Run from the project root (next to ProjectM.Avalonia.csproj).
 #>
 
 Set-Location $PSScriptRoot
 
-Write-Host "Building Jukebox-Visualizations - Windows x64 & Linux x64" -ForegroundColor Green
+Write-Host "Building ProjectM.Avalonia - Windows x64 & Linux x64" -ForegroundColor Green
 Write-Host "=========================================================" -ForegroundColor Green
 Write-Host ""
 
 # ── Validate source layout ──────────────────────────────────────────────
-if (-not (Test-Path "JukeboxVisualizations.csproj")) {
-    Write-Host "ERROR: JukeboxVisualizations.csproj not found in current directory." -ForegroundColor Red
-    Write-Host "       Run this script from the Jukebox-Visualizations project root." -ForegroundColor Red
+if (-not (Test-Path "ProjectM.Avalonia.csproj")) {
+    Write-Host "ERROR: ProjectM.Avalonia.csproj not found in current directory." -ForegroundColor Red
+    Write-Host "       Run this script from the project root." -ForegroundColor Red
     exit 1
 }
 
@@ -69,16 +63,16 @@ if (-not $libPopulated) {
 
 # ── Clean previous builds ───────────────────────────────────────────────
 Write-Host "Cleaning previous builds..." -ForegroundColor Yellow
-dotnet clean "JukeboxVisualizations.csproj" --configuration Release 2>$null | Out-Null
+dotnet clean "ProjectM.Avalonia.csproj" --configuration Release 2>$null | Out-Null
 foreach ($dir in @("./publish/win-x64", "./publish/linux-x64", "./publish/stage")) {
     if (Test-Path $dir) {
         Remove-Item -Recurse -Force $dir
     }
 }
 foreach ($file in @(
-    "./publish/Jukebox-Visualizations-win-x64-dropin.zip",
-    "./publish/Jukebox-Visualizations-linux-x64-dropin.zip",
-    "./publish/Jukebox-Visualizations-dropin.zip"
+    "./publish/ProjectM-Avalonia-win-x64.zip",
+    "./publish/ProjectM-Avalonia-linux-x64.zip",
+    "./publish/ProjectM-Avalonia.zip"
 )) {
     if (Test-Path $file) {
         Remove-Item -Force $file
@@ -97,7 +91,7 @@ Write-Host ""
 Write-Host "Building Windows x64..." -ForegroundColor Cyan
 Write-Host "-----------------------" -ForegroundColor Cyan
 
-dotnet build "JukeboxVisualizations.csproj" `
+dotnet build "ProjectM.Avalonia.csproj" `
     --configuration Release `
     --runtime win-x64 `
     -p:DebugType=None `
@@ -110,7 +104,7 @@ Write-Host ""
 Write-Host "Building Linux x64..." -ForegroundColor Cyan
 Write-Host "---------------------" -ForegroundColor Cyan
 
-dotnet build "JukeboxVisualizations.csproj" `
+dotnet build "ProjectM.Avalonia.csproj" `
     --configuration Release `
     --runtime linux-x64 `
     -p:DebugType=None `
@@ -131,21 +125,21 @@ Write-Host "------------------------" -ForegroundColor Cyan
 
 foreach ($rid in @("win-x64", "linux-x64")) {
     $dest = "./publish/$rid"
-    $dstLib = Join-Path $dest "lib"
-    New-Item -ItemType Directory -Force -Path $dstLib | Out-Null
+    $dstPlugins = Join-Path $dest "ProjectM.Avalonia"
+    New-Item -ItemType Directory -Force -Path $dstPlugins | Out-Null
 
     # 1) Native libraries from the source lib/ folder
     if ($libPopulated) {
-        Copy-Item (Join-Path $sourceLib "*") -Destination $dstLib -Recurse -Force
+        Copy-Item (Join-Path $sourceLib "*") -Destination $dstPlugins -Recurse -Force
         
-        # Clean up platform-incompatible native binaries from this staged lib folder
+        # Clean up platform-incompatible native binaries from this staged folder
         if ($rid -eq "win-x64") {
             # Remove Linux/macOS binaries
-            Get-ChildItem $dstLib -File | Where-Object { $_.Extension -eq ".so" -or $_.Name -like "*.so.*" -or $_.Extension -eq ".dylib" } | Remove-Item -Force
+            Get-ChildItem $dstPlugins -File | Where-Object { $_.Extension -eq ".so" -or $_.Name -like "*.so.*" -or $_.Extension -eq ".dylib" } | Remove-Item -Force
         }
         elseif ($rid -eq "linux-x64") {
             # Remove Windows binaries
-            Get-ChildItem $dstLib -File | Where-Object { $_.Extension -eq ".dll" -or $_.Extension -eq ".pdb" -or $_.Extension -eq ".exe" } | Remove-Item -Force
+            Get-ChildItem $dstPlugins -File | Where-Object { $_.Extension -eq ".dll" -or $_.Extension -eq ".pdb" -or $_.Extension -eq ".exe" } | Remove-Item -Force
         }
         Write-Host "  Staged native libs for ${rid}" -ForegroundColor Gray
     }
@@ -154,18 +148,16 @@ foreach ($rid in @("win-x64", "linux-x64")) {
     }
 
     # 2) Managed wrapper — copy from the build output (bin/Release/net10.0/<rid>/).
-    #    Also copy deps.json so the runtime can resolve Avalonia + Silk.NET
-    #    dependencies when loaded via Assembly.LoadFrom. Lives in <dest>/lib/
-    #    alongside the native libprojectM binary.
+    #    Also copy deps.json so the runtime can resolve dependencies.
     $buildOutput = "./bin/Release/net10.0/$rid"
     foreach ($file in @(
-        "JukeboxVisualizations.dll",
-        "JukeboxVisualizations.deps.json"
+        "ProjectM.Avalonia.dll",
+        "ProjectM.Avalonia.deps.json"
     )) {
         $src = Join-Path $buildOutput $file
         if (Test-Path $src) {
-            Copy-Item $src -Destination $dstLib -Force
-            Write-Host "  Copied for ${rid}: lib/$file" -ForegroundColor Gray
+            Copy-Item $src -Destination $dstPlugins -Force
+            Write-Host "  Copied for ${rid}: $file" -ForegroundColor Gray
         }
     }
 
@@ -179,7 +171,7 @@ Write-Host "------------------------" -ForegroundColor Cyan
 
 foreach ($rid in @("win-x64", "linux-x64")) {
     $dest = "./publish/$rid"
-    $zipPath = "./publish/Jukebox-Visualizations-$rid-dropin.zip"
+    $zipPath = "./publish/ProjectM-Avalonia-$rid.zip"
     if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
     
     if (Test-Path $dest) {
@@ -199,26 +191,16 @@ Write-Host "================================" -ForegroundColor Green
 Write-Host ""
 
 if ($winSuccess) {
-    Write-Host "  Windows x64 : OK -> ./publish/Jukebox-Visualizations-win-x64-dropin.zip" -ForegroundColor Green
+    Write-Host "  Windows x64 : OK -> ./publish/ProjectM-Avalonia-win-x64.zip" -ForegroundColor Green
 } else {
     Write-Host "  Windows x64 : FAILED" -ForegroundColor Red
 }
 
 if ($linuxSuccess) {
-    Write-Host "  Linux x64   : OK -> ./publish/Jukebox-Visualizations-linux-x64-dropin.zip" -ForegroundColor Green
+    Write-Host "  Linux x64   : OK -> ./publish/ProjectM-Avalonia-linux-x64.zip" -ForegroundColor Green
 } else {
     Write-Host "  Linux x64   : FAILED" -ForegroundColor Red
 }
-Write-Host ""
-
-Write-Host "To enable visualizations in Jukebox:" -ForegroundColor Yellow
-Write-Host "  1. Unzip the archive into your Jukebox build output directory" -ForegroundColor Yellow
-Write-Host "     (next to Jukebox or Jukebox.exe). The result is:" -ForegroundColor Yellow
-Write-Host "         lib/                          (wrapper + native runtimes)" -ForegroundColor Yellow
-Write-Host "  2. Also drop Jukebox's own native runtimes (bass.dll, libmpv-2.dll" -ForegroundColor Yellow
-Write-Host "     or libbass.so, libmpv.so.2) into the same lib/ folder." -ForegroundColor Yellow
-Write-Host "  3. Restart Jukebox. The visualizer button appears in the transport" -ForegroundColor Yellow
-Write-Host "     bar automatically." -ForegroundColor Yellow
 Write-Host ""
 
 if ($winSuccess -and $linuxSuccess) {

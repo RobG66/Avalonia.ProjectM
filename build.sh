@@ -1,29 +1,27 @@
 #!/usr/bin/env bash
 #
-# Builds the Jukebox-Visualizations wrapper and stages a self-contained
-# drop-in layout suitable for placing next to Jukebox.exe.
+# Builds the ProjectM.Avalonia library and stages a self-contained layout.
 # Bash equivalent of build.ps1 for Linux/macOS developers.
 #
-# JukeboxVisualizations.dll is pure IL — identical on every platform.
+# ProjectM.Avalonia.dll is pure IL — identical on every platform.
 # We use `dotnet build` (not `dotnet publish`) so only the project's own
 # DLL and deps.json land in bin/Release/net10.0/, with no transitive
 # Avalonia or Silk.NET DLLs copied alongside.
 #
-# Run from the Jukebox-Visualizations project root (next to
-# JukeboxVisualizations.csproj).
+# Run from the project root (next to ProjectM.Avalonia.csproj).
 #
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
-echo "Building Jukebox-Visualizations - Windows x64 & Linux x64"
+echo "Building ProjectM.Avalonia - Windows x64 & Linux x64"
 echo "========================================================="
 echo ""
 
 # ── Validate source layout ──────────────────────────────────────────
-if [[ ! -f "JukeboxVisualizations.csproj" ]]; then
-    echo "ERROR: JukeboxVisualizations.csproj not found in current directory." >&2
-    echo "       Run this script from the Jukebox-Visualizations project root." >&2
+if [[ ! -f "ProjectM.Avalonia.csproj" ]]; then
+    echo "ERROR: ProjectM.Avalonia.csproj not found in current directory." >&2
+    echo "       Run this script from the project root." >&2
     exit 1
 fi
 
@@ -55,9 +53,9 @@ fi
 
 # ── Clean previous builds ───────────────────────────────────────────
 echo "Cleaning previous builds..."
-dotnet clean "JukeboxVisualizations.csproj" --configuration Release >/dev/null 2>&1 || true
+dotnet clean "ProjectM.Avalonia.csproj" --configuration Release >/dev/null 2>&1 || true
 rm -rf ./publish/win-x64 ./publish/linux-x64 ./publish/stage
-rm -f ./publish/Jukebox-Visualizations-win-x64-dropin.zip ./publish/Jukebox-Visualizations-linux-x64-dropin.zip ./publish/Jukebox-Visualizations-dropin.zip
+rm -f ./publish/ProjectM-Avalonia-win-x64.zip ./publish/ProjectM-Avalonia-linux-x64.zip ./publish/ProjectM-Avalonia.zip
 echo ""
 
 # ── Build managed wrappers for both runtimes ─────────────────────────────
@@ -67,7 +65,7 @@ echo ""
 # --- Windows x64 ---
 echo "Building Windows x64..."
 echo "-----------------------"
-dotnet build "JukeboxVisualizations.csproj" \
+dotnet build "ProjectM.Avalonia.csproj" \
     --configuration Release \
     --runtime win-x64 \
     -p:DebugType=None \
@@ -78,7 +76,7 @@ echo ""
 # --- Linux x64 ---
 echo "Building Linux x64..."
 echo "---------------------"
-dotnet build "JukeboxVisualizations.csproj" \
+dotnet build "ProjectM.Avalonia.csproj" \
     --configuration Release \
     --runtime linux-x64 \
     -p:DebugType=None \
@@ -99,8 +97,8 @@ echo "------------------------"
 
 for rid in win-x64 linux-x64; do
     dest="./publish/$rid"
-    dst_lib="$dest/lib"
-    mkdir -p "$dst_lib"
+    dst_plugins="$dest/ProjectM.Avalonia"
+    mkdir -p "$dst_plugins"
 
     # 1) Native libraries from the source lib/ folder
     if [[ "$lib_populated" == "true" ]]; then
@@ -123,7 +121,7 @@ for rid in win-x64 linux-x64; do
                 esac
             fi
             
-            cp -r "$entry" "$dst_lib/"
+            cp -r "$entry" "$dst_plugins/"
         done
         echo "  Staged native libs for $rid"
     else
@@ -132,10 +130,10 @@ for rid in win-x64 linux-x64; do
 
     # 2) Managed wrapper — copy from the build output (bin/Release/net10.0/<rid>/).
     build_output="./bin/Release/net10.0/$rid"
-    for file in JukeboxVisualizations.dll JukeboxVisualizations.deps.json; do
+    for file in ProjectM.Avalonia.dll ProjectM.Avalonia.deps.json; do
         if [[ -f "$build_output/$file" ]]; then
-            cp "$build_output/$file" "$dst_lib/"
-            echo "  Copied for $rid: lib/$file"
+            cp "$build_output/$file" "$dst_plugins/"
+            echo "  Copied for $rid: $file"
         fi
     done
 
@@ -149,7 +147,7 @@ echo "------------------------"
 
 for rid in win-x64 linux-x64; do
     dest="./publish/$rid"
-    zip_path="./publish/Jukebox-Visualizations-$rid-dropin.zip"
+    zip_path="./publish/ProjectM-Avalonia-$rid.zip"
     rm -f "$zip_path"
     
     if [[ -d "$dest" ]]; then
@@ -172,26 +170,16 @@ echo "========================================================="
 echo ""
 
 if [ $win_success -eq 0 ]; then
-    echo "  Windows x64 : OK -> ./publish/Jukebox-Visualizations-win-x64-dropin.zip"
+    echo "  Windows x64 : OK -> ./publish/ProjectM-Avalonia-win-x64.zip"
 else
     echo "  Windows x64 : FAILED"
 fi
 
 if [ $linux_success -eq 0 ]; then
-    echo "  Linux x64   : OK -> ./publish/Jukebox-Visualizations-linux-x64-dropin.zip"
+    echo "  Linux x64   : OK -> ./publish/ProjectM-Avalonia-linux-x64.zip"
 else
     echo "  Linux x64   : FAILED"
 fi
-echo ""
-
-echo "To enable visualizations in Jukebox:"
-echo "  1. Unzip the archive into your Jukebox build output directory"
-echo "     (next to Jukebox or Jukebox.exe). The result is:"
-echo "         lib/                          (wrapper + native runtimes)"
-echo "  2. Also drop Jukebox's own native runtimes (bass.dll, libmpv-2.dll"
-echo "     or libbass.so, libmpv.so.2) into the same lib/ folder."
-echo "  3. Restart Jukebox. The visualizer button appears in the transport"
-echo "     bar automatically."
 echo ""
 
 exit 0

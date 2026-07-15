@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace JukeboxVisualizations.Native;
+namespace ProjectM.Avalonia.Native;
 
 public enum ProjectMChannels
 {
@@ -108,7 +108,7 @@ public static class ProjectMNative
     /// </summary>
     private static string GetLibraryPath()
     {
-        var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lib");
+        var dir = Path.GetDirectoryName(typeof(ProjectMNative).Assembly.Location) ?? AppDomain.CurrentDomain.BaseDirectory;
 
         string fileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "libprojectM.dll"
