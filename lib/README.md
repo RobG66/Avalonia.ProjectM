@@ -21,7 +21,7 @@ publishes the binaries to a GitHub release on this repo. This is the
 recommended way — the binaries are built reproducibly from a known
 upstream commit, and LICENSE files are bundled.
 
-1. Go to: https://github.com/RobG66/Jukebox-Visualizations/releases
+1. Go to: https://github.com/RobG66/Avalonia.ProjectM/releases
 2. Find the latest "Native dependencies" release.
 3. Download the asset for your platform:
    - Windows: `libprojectM-win-x64.zip`
@@ -39,7 +39,7 @@ If you want to build from source (e.g. to use a different projectM
 version or to apply patches), trigger the `build-natives.yml` workflow
 manually:
 
-1. Go to: https://github.com/RobG66/Jukebox-Visualizations/actions
+1. Go to: https://github.com/RobG66/Avalonia.ProjectM/actions
 2. Click "Build native dependencies" → "Run workflow".
 3. Wait for the build to complete (~10 minutes).
 4. Download the resulting release asset and extract into `lib/` as above.
@@ -83,12 +83,12 @@ produce the drop-in zip:
 ```
 
 The build script:
-1. Builds `JukeboxVisualizations.dll` (the managed wrapper) for both
+1. Builds `Avalonia.ProjectM.dll` (the managed wrapper) for both
    `win-x64` and `linux-x64` RIDs.
 2. Stages the managed wrapper + the contents of `lib/` into a single
    `lib/` subfolder in the output.
 3. Stages the preset data from `ProjectM/` into a `ProjectM/` subfolder.
-4. Produces `publish/Jukebox-Visualizations-dropin.zip`.
+4. Produces zip packages under the `publish/` directory.
 
 The user unzips this archive into their Jukebox build output directory
 to enable visualizations.

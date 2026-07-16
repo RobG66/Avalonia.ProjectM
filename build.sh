@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
 #
-# Builds the ProjectM.Avalonia library and stages a self-contained layout.
+# Builds the Avalonia.ProjectM library and stages a self-contained layout.
 # Bash equivalent of build.ps1 for Linux/macOS developers.
 #
-# ProjectM.Avalonia.dll is pure IL — identical on every platform.
+# Avalonia.ProjectM.dll is pure IL — identical on every platform.
 # We use `dotnet build` (not `dotnet publish`) so only the project's own
 # DLL and deps.json land in bin/Release/net10.0/, with no transitive
 # Avalonia or Silk.NET DLLs copied alongside.
 #
-# Run from the project root (next to ProjectM.Avalonia.csproj).
+# Run from the project root (next to Avalonia.ProjectM.csproj).
 #
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
-echo "Building ProjectM.Avalonia - Windows x64 & Linux x64"
+echo "Building Avalonia.ProjectM - Windows x64 & Linux x64"
 echo "========================================================="
 echo ""
 
 # ── Validate source layout ──────────────────────────────────────────
-if [[ ! -f "ProjectM.Avalonia.csproj" ]]; then
-    echo "ERROR: ProjectM.Avalonia.csproj not found in current directory." >&2
+if [[ ! -f "Avalonia.ProjectM.csproj" ]]; then
+    echo "ERROR: Avalonia.ProjectM.csproj not found in current directory." >&2
     echo "       Run this script from the project root." >&2
     exit 1
 fi
@@ -44,7 +44,7 @@ if [[ "$lib_populated" != "true" ]]; then
     echo "         will not be staged in the drop-in zips."
     echo ""
     echo "         To populate lib/:"
-    echo "           1. Go to https://github.com/RobG66/Jukebox-Visualizations/releases"
+    echo "           1. Go to https://github.com/RobG66/Avalonia.ProjectM/releases"
     echo "           2. Download libprojectM-win-x64.zip (or libprojectM-linux-x64.tar.gz)"
     echo "           3. Extract into lib/"
     echo "         See lib/README.md for details."
@@ -53,19 +53,19 @@ fi
 
 # ── Clean previous builds ───────────────────────────────────────────
 echo "Cleaning previous builds..."
-dotnet clean "ProjectM.Avalonia.csproj" --configuration Release >/dev/null 2>&1 || true
+dotnet clean "Avalonia.ProjectM.csproj" --configuration Release >/dev/null 2>&1 || true
 rm -rf ./publish/win-x64 ./publish/linux-x64 ./publish/stage
 rm -f ./publish/ProjectM-Avalonia-win-x64.zip ./publish/ProjectM-Avalonia-linux-x64.zip ./publish/ProjectM-Avalonia.zip
 echo ""
 
 # ── Build managed wrappers for both runtimes ─────────────────────────────
-# JukeboxVisualizations.dll is pure IL — identical on every platform.
+# Avalonia.ProjectM.dll is pure IL — identical on every platform.
 # We build for both RIDs so the RID-specific deps.json is generated.
 
 # --- Windows x64 ---
 echo "Building Windows x64..."
 echo "-----------------------"
-dotnet build "ProjectM.Avalonia.csproj" \
+dotnet build "Avalonia.ProjectM.csproj" \
     --configuration Release \
     --runtime win-x64 \
     -p:DebugType=None \
@@ -76,7 +76,7 @@ echo ""
 # --- Linux x64 ---
 echo "Building Linux x64..."
 echo "---------------------"
-dotnet build "ProjectM.Avalonia.csproj" \
+dotnet build "Avalonia.ProjectM.csproj" \
     --configuration Release \
     --runtime linux-x64 \
     -p:DebugType=None \
@@ -97,7 +97,7 @@ echo "------------------------"
 
 for rid in win-x64 linux-x64; do
     dest="./publish/$rid"
-    dst_plugins="$dest/ProjectM.Avalonia"
+    dst_plugins="$dest/Avalonia.ProjectM"
     mkdir -p "$dst_plugins"
 
     # 1) Native libraries from the source lib/ folder
@@ -130,7 +130,7 @@ for rid in win-x64 linux-x64; do
 
     # 2) Managed wrapper — copy from the build output (bin/Release/net10.0/<rid>/).
     build_output="./bin/Release/net10.0/$rid"
-    for file in ProjectM.Avalonia.dll ProjectM.Avalonia.deps.json; do
+    for file in Avalonia.ProjectM.dll Avalonia.ProjectM.deps.json; do
         if [[ -f "$build_output/$file" ]]; then
             cp "$build_output/$file" "$dst_plugins/"
             echo "  Copied for $rid: $file"

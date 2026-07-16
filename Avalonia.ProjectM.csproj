@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyName>ProjectM.Avalonia</AssemblyName>
+    <AssemblyName>Avalonia.ProjectM</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

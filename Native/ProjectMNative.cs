@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace ProjectM.Avalonia.Native;
+namespace Avalonia.ProjectM.Native;
 
 public enum ProjectMChannels
 {

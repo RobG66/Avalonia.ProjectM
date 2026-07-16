@@ -1,15 +1,15 @@
 <#
 .SYNOPSIS
-    Builds the ProjectM.Avalonia library and stages a self-contained
+    Builds the Avalonia.ProjectM library and stages a self-contained
     drop-in layout.
 
 .DESCRIPTION
     Produces a single staged folder at `./publish/stage/` containing:
 
         publish/stage/
-        └── ProjectM.Avalonia/
-            ├── ProjectM.Avalonia.dll       (managed wrapper)
-            ├── ProjectM.Avalonia.deps.json
+        └── Avalonia.ProjectM/
+            ├── Avalonia.ProjectM.dll       (managed wrapper)
+            ├── Avalonia.ProjectM.deps.json
             ├── libprojectM.dll             (Windows — from source lib/)
             ├── libprojectM.so.4            (Linux   — from source lib/)
             └── glew32.dll                  (Windows — from source lib/)
@@ -18,24 +18,24 @@
     `lib/` manually by downloading from the GitHub release produced by the 
     build-natives.yml CI workflow (see lib/README.md for instructions).
 
-    ProjectM.Avalonia.dll is pure IL — identical on every platform.
+    Avalonia.ProjectM.dll is pure IL — identical on every platform.
     We use `dotnet build` (not `dotnet publish`) so only the project's own
     DLL and deps.json land in bin/Release/net10.0/, with no transitive
     Avalonia or Silk.NET DLLs copied alongside.
 
 .NOTES
-    Run from the project root (next to ProjectM.Avalonia.csproj).
+    Run from the project root (next to Avalonia.ProjectM.csproj).
 #>
 
 Set-Location $PSScriptRoot
 
-Write-Host "Building ProjectM.Avalonia - Windows x64 & Linux x64" -ForegroundColor Green
+Write-Host "Building Avalonia.ProjectM - Windows x64 & Linux x64" -ForegroundColor Green
 Write-Host "=========================================================" -ForegroundColor Green
 Write-Host ""
 
 # ── Validate source layout ──────────────────────────────────────────────
-if (-not (Test-Path "ProjectM.Avalonia.csproj")) {
-    Write-Host "ERROR: ProjectM.Avalonia.csproj not found in current directory." -ForegroundColor Red
+if (-not (Test-Path "Avalonia.ProjectM.csproj")) {
+    Write-Host "ERROR: Avalonia.ProjectM.csproj not found in current directory." -ForegroundColor Red
     Write-Host "       Run this script from the project root." -ForegroundColor Red
     exit 1
 }
@@ -54,7 +54,7 @@ if (-not $libPopulated) {
     Write-Host "         will not be staged in the drop-in zips." -ForegroundColor Yellow
     Write-Host "" -ForegroundColor Yellow
     Write-Host "         To populate lib/:" -ForegroundColor Yellow
-    Write-Host "           1. Go to https://github.com/RobG66/Jukebox-Visualizations/releases" -ForegroundColor Yellow
+    Write-Host "           1. Go to https://github.com/RobG66/Avalonia.ProjectM/releases" -ForegroundColor Yellow
     Write-Host "           2. Download libprojectM-win-x64.zip (or libprojectM-linux-x64.tar.gz)" -ForegroundColor Yellow
     Write-Host "           3. Extract into lib/" -ForegroundColor Yellow
     Write-Host "         See lib/README.md for details." -ForegroundColor Yellow
@@ -63,7 +63,7 @@ if (-not $libPopulated) {
 
 # ── Clean previous builds ───────────────────────────────────────────────
 Write-Host "Cleaning previous builds..." -ForegroundColor Yellow
-dotnet clean "ProjectM.Avalonia.csproj" --configuration Release 2>$null | Out-Null
+dotnet clean "Avalonia.ProjectM.csproj" --configuration Release 2>$null | Out-Null
 foreach ($dir in @("./publish/win-x64", "./publish/linux-x64", "./publish/stage")) {
     if (Test-Path $dir) {
         Remove-Item -Recurse -Force $dir
@@ -81,7 +81,7 @@ foreach ($file in @(
 Write-Host ""
 
 # ── Build managed wrappers for both runtimes ─────────────────────────────
-# JukeboxVisualizations.dll is pure IL — identical on every platform.
+# Avalonia.ProjectM.dll is pure IL — identical on every platform.
 # We build for both RIDs so the RID-specific deps.json is generated.
 # dotnet build (not publish) keeps the output clean: only the project's
 # own DLL and deps.json land in bin/Release/net10.0/<rid>/, with no
@@ -91,7 +91,7 @@ Write-Host ""
 Write-Host "Building Windows x64..." -ForegroundColor Cyan
 Write-Host "-----------------------" -ForegroundColor Cyan
 
-dotnet build "ProjectM.Avalonia.csproj" `
+dotnet build "Avalonia.ProjectM.csproj" `
     --configuration Release `
     --runtime win-x64 `
     -p:DebugType=None `
@@ -104,7 +104,7 @@ Write-Host ""
 Write-Host "Building Linux x64..." -ForegroundColor Cyan
 Write-Host "---------------------" -ForegroundColor Cyan
 
-dotnet build "ProjectM.Avalonia.csproj" `
+dotnet build "Avalonia.ProjectM.csproj" `
     --configuration Release `
     --runtime linux-x64 `
     -p:DebugType=None `
@@ -125,7 +125,7 @@ Write-Host "------------------------" -ForegroundColor Cyan
 
 foreach ($rid in @("win-x64", "linux-x64")) {
     $dest = "./publish/$rid"
-    $dstPlugins = Join-Path $dest "ProjectM.Avalonia"
+    $dstPlugins = Join-Path $dest "Avalonia.ProjectM"
     New-Item -ItemType Directory -Force -Path $dstPlugins | Out-Null
 
     # 1) Native libraries from the source lib/ folder
@@ -151,8 +151,8 @@ foreach ($rid in @("win-x64", "linux-x64")) {
     #    Also copy deps.json so the runtime can resolve dependencies.
     $buildOutput = "./bin/Release/net10.0/$rid"
     foreach ($file in @(
-        "ProjectM.Avalonia.dll",
-        "ProjectM.Avalonia.deps.json"
+        "Avalonia.ProjectM.dll",
+        "Avalonia.ProjectM.deps.json"
     )) {
         $src = Join-Path $buildOutput $file
         if (Test-Path $src) {

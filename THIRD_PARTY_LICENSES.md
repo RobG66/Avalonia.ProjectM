@@ -1,12 +1,12 @@
 # Third-Party Licenses
 
 This document lists the third-party libraries, native binaries, and
-NuGet packages used by the Jukebox-Visualizations project, along with
+NuGet packages used by the Avalonia.ProjectM project, along with
 their licenses and where to obtain the source. It exists to make
 licensing obligations explicit and to ensure compliance with permissive
 and copyleft license terms.
 
-For the avoidance of doubt: **Jukebox-Visualizations does not commit
+For the avoidance of doubt: **Avalonia.ProjectM does not commit
 third-party native binaries (`.dll` / `.so` / `.dylib`) to this
 repository.** They are downloaded manually by the developer from the
 GitHub release produced by the `build-natives.yml` CI workflow, then
@@ -88,7 +88,7 @@ in the NuGet package itself.
 
 These are tools used by the `build-natives.yml` CI workflow to build
 `libprojectM` from source. They are not distributed with
-Jukebox-Visualizations — they exist only in the CI build environment.
+Avalonia.ProjectM — they exist only in the CI build environment.
 
 ### CMake
 

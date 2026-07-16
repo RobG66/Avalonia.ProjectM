@@ -1,13 +1,13 @@
 using Avalonia;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
-using ProjectM.Avalonia.Native;
+using Avalonia.ProjectM.Native;
 using System;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using static Avalonia.OpenGL.GlConsts;
 
-namespace ProjectM.Avalonia.Controls;
+namespace Avalonia.ProjectM.Controls;
 
 public class ProjectMControl : OpenGlControlBase
 {
@@ -423,7 +423,6 @@ public class ProjectMControl : OpenGlControlBase
                     // Normalize line endings to Unix format (\n)
                     content = content.Replace("\r\n", "\n");
                     _lastLoadedPresetPath = presetPath;
-                    _lastLoadedPresetContent = content;
                     LoadPresetFromContent(content, smooth);
                     Console.WriteLine($"[ProjectM] Loaded preset from file: {presetPath}");
                 }
@@ -441,6 +440,7 @@ public class ProjectMControl : OpenGlControlBase
         {
             var normalizedPath = presetPath.Replace('\\', '/');
             ProjectMNative.projectm_load_preset_file(_projectMHandle, normalizedPath, smooth);
+            _lastLoadedPresetPath = presetPath;
         }
         else
         {
@@ -660,7 +660,15 @@ public class ProjectMControl : OpenGlControlBase
 
                     if (ProjectMNative.projectm_set_texture_search_paths != null)
                     {
-                        var texturesPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ProjectM", "textures");
+                        var assemblyDir = System.IO.Path.GetDirectoryName(typeof(ProjectMControl).Assembly.Location) ?? AppDomain.CurrentDomain.BaseDirectory;
+                        var texturesPath = System.IO.Path.Combine(assemblyDir, "ProjectM", "textures");
+                        
+                        // Fallback to legacy path if plugin path does not exist
+                        if (!System.IO.Directory.Exists(texturesPath))
+                        {
+                            texturesPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ProjectM", "textures");
+                        }
+
                         if (System.IO.Directory.Exists(texturesPath))
                         {
                             IntPtr ptr = Marshal.StringToHGlobalAnsi(texturesPath);

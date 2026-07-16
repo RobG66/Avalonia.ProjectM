@@ -1,4 +1,4 @@
-# Jukebox-Visualizations — Wrapper Patch Changelog
+# Avalonia.ProjectM — Wrapper Patch Changelog
 
 Two files in this directory replace the originals in `Native/` and `Controls/`:
 

@@ -25,12 +25,12 @@
 #
 # ── How to use the output ────────────────────────────────────────────
 # After this workflow runs successfully:
-#   1. Go to the Jukebox-Visualizations repo's Releases page on GitHub.
+#   1. Go to the Avalonia.ProjectM repo's Releases page on GitHub.
 #   2. You'll find natives-win-x64.zip, natives-linux-x64.tar.gz, and
 #      checksums.sha256 attached to the release.
 #   3. Compute the SHA-256 of each archive (or read it from
 #      checksums.sha256).
-#   4. Update natives.json in BOTH the Jukebox-Visualizations repo and
+#   4. Update natives.json in BOTH the Avalonia.ProjectM repo and
 #      the Jukebox repo with the new URLs + SHA-256s.
 #   5. Commit and push the manifest updates.
 #
@@ -82,7 +82,7 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - name: Checkout Jukebox-Visualizations
+      - name: Checkout Avalonia.ProjectM
         uses: actions/checkout@v4
 
       - name: Setup .NET SDK
@@ -90,13 +90,13 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Build JukeboxVisualizations.dll (managed wrapper)
+      - name: Build Avalonia.ProjectM.dll (managed wrapper)
         shell: bash
         run: |
           # Build the managed wrapper. The DLL is pure IL — identical for
           # every platform — but we use the win-x64 RID so the .deps.json
           # has the right runtime fallbacks configured.
-          dotnet publish JukeboxVisualizations.csproj \
+          dotnet publish Avalonia.ProjectM.csproj \
             -c Release \
             -r win-x64 \
             --self-contained false \
@@ -105,11 +105,11 @@ jobs:
             -p:DebugSymbols=false
 
           # Verify the wrapper was built.
-          if [ ! -f "./wrapper-output/JukeboxVisualizations.dll" ]; then
-            echo "ERROR: JukeboxVisualizations.dll not found in publish output" >&2
+          if [ ! -f "./wrapper-output/Avalonia.ProjectM.dll" ]; then
+            echo "ERROR: Avalonia.ProjectM.dll not found in publish output" >&2
             exit 1
           fi
-          echo "Built JukeboxVisualizations.dll successfully."
+          echo "Built Avalonia.ProjectM.dll successfully."
 
       - name: Set up MSVC dev environment
         uses: ilammy/msvc-dev-cmd@v1
@@ -195,21 +195,21 @@ jobs:
           $stage = "staging"
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
 
-          # ── Managed wrapper (JukeboxVisualizations.dll) ──
+          # ── Managed wrapper (Avalonia.ProjectM.dll) ──
           # Built earlier via `dotnet publish` into ./wrapper-output/.
           # The wrapper is pure managed IL — same DLL on every platform.
           # Lives in lib/ alongside the native libprojectM binary.
-          $wrapper = "./wrapper-output/JukeboxVisualizations.dll"
+          $wrapper = "./wrapper-output/Avalonia.ProjectM.dll"
           if (Test-Path $wrapper) {
-            Copy-Item $wrapper -Destination "$stage/JukeboxVisualizations.dll"
-            Write-Host "Staged: JukeboxVisualizations.dll"
+            Copy-Item $wrapper -Destination "$stage/Avalonia.ProjectM.dll"
+            Write-Host "Staged: Avalonia.ProjectM.dll"
           } else {
-            throw "JukeboxVisualizations.dll not found in wrapper-output/"
+            throw "Avalonia.ProjectM.dll not found in wrapper-output/"
           }
-          $depsJson = "./wrapper-output/JukeboxVisualizations.deps.json"
+          $depsJson = "./wrapper-output/Avalonia.ProjectM.deps.json"
           if (Test-Path $depsJson) {
-            Copy-Item $depsJson -Destination "$stage/JukeboxVisualizations.deps.json"
-            Write-Host "Staged: JukeboxVisualizations.deps.json"
+            Copy-Item $depsJson -Destination "$stage/Avalonia.ProjectM.deps.json"
+            Write-Host "Staged: Avalonia.ProjectM.deps.json"
           }
 
           # ── Native: libprojectM.dll ──
@@ -272,7 +272,7 @@ jobs:
 
           # Build info — records what was built, from what source, when.
           @"
-          Jukebox-Visualizations Windows x64 build
+          Avalonia.ProjectM Windows x64 build
           ========================================
           ProjectM source: ${{ env.PROJECTM_REPO }}
           ProjectM ref:    ${{ env.PROJECTM_REF }}
@@ -282,8 +282,8 @@ jobs:
           Workflow:        ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
           Contents:
-          - JukeboxVisualizations.dll        — managed wrapper (MIT)
-          - JukeboxVisualizations.deps.json  — dependency manifest
+          - Avalonia.ProjectM.dll             — managed wrapper (MIT)
+          - Avalonia.ProjectM.deps.json       — dependency manifest
           - libprojectM.dll                  — LGPL v2.1+ (see libprojectM-LICENSE.txt)
           - glew32.dll                       — BSD 3-Clause / MIT (see glew-LICENSE.txt)
           "@ | Out-File -FilePath "$stage/BUILD-INFO.txt" -Encoding utf8
@@ -301,7 +301,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Jukebox-Visualizations
+      - name: Checkout Avalonia.ProjectM
         uses: actions/checkout@v4
 
       - name: Setup .NET SDK
@@ -309,12 +309,12 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Build JukeboxVisualizations.dll (managed wrapper)
+      - name: Build Avalonia.ProjectM.dll (managed wrapper)
         run: |
           # Build the managed wrapper. The DLL is pure IL — identical for
           # every platform — but we use the linux-x64 RID so the .deps.json
           # has the right runtime fallbacks configured.
-          dotnet publish JukeboxVisualizations.csproj \
+          dotnet publish Avalonia.ProjectM.csproj \
             -c Release \
             -r linux-x64 \
             --self-contained false \
@@ -323,11 +323,11 @@ jobs:
             -p:DebugSymbols=false
 
           # Verify the wrapper was built.
-          if [ ! -f "./wrapper-output/JukeboxVisualizations.dll" ]; then
-            echo "ERROR: JukeboxVisualizations.dll not found in publish output" >&2
+          if [ ! -f "./wrapper-output/Avalonia.ProjectM.dll" ]; then
+            echo "ERROR: Avalonia.ProjectM.dll not found in publish output" >&2
             exit 1
           fi
-          echo "Built JukeboxVisualizations.dll successfully."
+          echo "Built Avalonia.ProjectM.dll successfully."
 
       - name: Install build dependencies
         run: |
@@ -392,20 +392,20 @@ jobs:
           stage="staging"
           mkdir -p "$stage"
 
-          # ── Managed wrapper (JukeboxVisualizations.dll) ──
+          # ── Managed wrapper (Avalonia.ProjectM.dll) ──
           # Built earlier via `dotnet publish` into ./wrapper-output/.
           # The wrapper is pure managed IL — same DLL on every platform.
           # Lives in lib/ alongside the native libprojectM binary.
-          if [ -f "./wrapper-output/JukeboxVisualizations.dll" ]; then
-            cp "./wrapper-output/JukeboxVisualizations.dll" "$stage/"
-            echo "Staged: JukeboxVisualizations.dll"
+          if [ -f "./wrapper-output/Avalonia.ProjectM.dll" ]; then
+            cp "./wrapper-output/Avalonia.ProjectM.dll" "$stage/"
+            echo "Staged: Avalonia.ProjectM.dll"
           else
-            echo "ERROR: JukeboxVisualizations.dll not found in wrapper-output/" >&2
+            echo "ERROR: Avalonia.ProjectM.dll not found in wrapper-output/" >&2
             exit 1
           fi
-          if [ -f "./wrapper-output/JukeboxVisualizations.deps.json" ]; then
-            cp "./wrapper-output/JukeboxVisualizations.deps.json" "$stage/"
-            echo "Staged: JukeboxVisualizations.deps.json"
+          if [ -f "./wrapper-output/Avalonia.ProjectM.deps.json" ]; then
+            cp "./wrapper-output/Avalonia.ProjectM.deps.json" "$stage/"
+            echo "Staged: Avalonia.ProjectM.deps.json"
           fi
 
           # ── Native: libprojectM.so.4 ──
@@ -444,7 +444,7 @@ jobs:
 
           # Build info — records what was built, from what source, when.
           cat > "$stage/BUILD-INFO.txt" <<EOF
-          Jukebox-Visualizations Linux x64 build
+          Avalonia.ProjectM Linux x64 build
           ======================================
           ProjectM source: ${{ env.PROJECTM_REPO }}
           ProjectM ref:    ${{ env.PROJECTM_REF }}
@@ -454,8 +454,8 @@ jobs:
           Workflow:        ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
           Contents:
-          - JukeboxVisualizations.dll        — managed wrapper (MIT)
-          - JukeboxVisualizations.deps.json  — dependency manifest
+          - Avalonia.ProjectM.dll             — managed wrapper (MIT)
+          - Avalonia.ProjectM.deps.json       — dependency manifest
           - libprojectM.so.4                 — LGPL v2.1+ (see libprojectM-LICENSE.txt)
           EOF
 
@@ -487,17 +487,17 @@ jobs:
         run: |
           # Windows: zip (PowerShell-friendly extraction)
           cd artifacts/natives-win-x64
-          zip -r "$GITHUB_WORKSPACE/Jukebox-Visualizations-win-x64.zip" .
+          zip -r "$GITHUB_WORKSPACE/Avalonia.ProjectM-win-x64.zip" .
           cd "$GITHUB_WORKSPACE"
 
           # Linux: tar.gz (preserves permissions, standard on Linux)
           cd artifacts/natives-linux-x64
-          tar -czf "$GITHUB_WORKSPACE/Jukebox-Visualizations-linux-x64.tar.gz" .
+          tar -czf "$GITHUB_WORKSPACE/Avalonia.ProjectM-linux-x64.tar.gz" .
           cd "$GITHUB_WORKSPACE"
 
       - name: Compute SHA-256 checksums
         run: |
-          sha256sum Jukebox-Visualizations-win-x64.zip Jukebox-Visualizations-linux-x64.tar.gz > checksums.sha256
+          sha256sum Avalonia.ProjectM-win-x64.zip Avalonia.ProjectM-linux-x64.tar.gz > checksums.sha256
           echo ""
           echo "Checksums:"
           cat checksums.sha256
@@ -506,11 +506,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name || 'natives-latest' }}
-          name: Jukebox-Visualizations ${{ github.ref_name || 'latest' }}
+          name: Avalonia.ProjectM ${{ github.ref_name || 'latest' }}
           body: |
-            # Jukebox-Visualizations drop-in package
+            # Avalonia.ProjectM drop-in package
 
-            Built from upstream projectM source + the Jukebox-Visualizations managed wrapper by the `build-natives.yml` CI workflow.
+            Built from upstream projectM source + the Avalonia.ProjectM managed wrapper by the `build-natives.yml` CI workflow.
 
             **ProjectM source:** ${{ env.PROJECTM_REPO }}
             **ProjectM ref:** ${{ env.PROJECTM_REF }}
@@ -519,8 +519,8 @@ jobs:
 
             Each archive contains a complete drop-in for the Jukebox's `lib/` folder:
 
-            - `Jukebox-Visualizations-win-x64.zip` — contains `JukeboxVisualizations.dll`, `JukeboxVisualizations.deps.json`, `libprojectM.dll`, `glew32.dll`, LICENSE files, BUILD-INFO.txt
-            - `Jukebox-Visualizations-linux-x64.tar.gz` — contains `JukeboxVisualizations.dll`, `JukeboxVisualizations.deps.json`, `libprojectM.so.4`, LICENSE files, BUILD-INFO.txt
+            - `Avalonia.ProjectM-win-x64.zip` — contains `Avalonia.ProjectM.dll`, `Avalonia.ProjectM.deps.json`, `libprojectM.dll`, `glew32.dll`, LICENSE files, BUILD-INFO.txt
+            - `Avalonia.ProjectM-linux-x64.tar.gz` — contains `Avalonia.ProjectM.dll`, `Avalonia.ProjectM.deps.json`, `libprojectM.so.4`, LICENSE files, BUILD-INFO.txt
             - `checksums.sha256` — SHA-256 of each archive (for verification)
 
             ## How to use
@@ -531,7 +531,7 @@ jobs:
                go directly into `lib/`.
             3. Also ensure the `ProjectM/` preset folder (containing `presets/`
                and `textures/`) is in the Jukebox build output directory. If
-               you don't have it, build the Jukebox-Visualizations repo with
+               you don't have it, build the Avalonia.ProjectM repo with
                `build.ps1` / `build.sh` — that script stages the preset data
                alongside the binaries.
             4. Restart Jukebox. The visualizer button appears in the transport
@@ -539,13 +539,13 @@ jobs:
 
             ## Licensing
 
-            - `JukeboxVisualizations.dll` — MIT (the managed wrapper)
+            - `Avalonia.ProjectM.dll` — MIT (the managed wrapper)
             - `libprojectM.dll` / `libprojectM.so.4` — **LGPL v2.1+** (see `libprojectM-LICENSE.txt` inside each archive)
             - `glew32.dll` — **BSD 3-Clause / MIT** (see `glew-LICENSE.txt` inside the Windows archive)
 
             See `THIRD_PARTY_LICENSES.md` in the repository for details.
           files: |
-            Jukebox-Visualizations-win-x64.zip
-            Jukebox-Visualizations-linux-x64.tar.gz
+            Avalonia.ProjectM-win-x64.zip
+            Avalonia.ProjectM-linux-x64.tar.gz
             checksums.sha256
           fail_on_unmatched_files: true

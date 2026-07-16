@@ -1,6 +1,6 @@
-# ProjectM.Avalonia
+# Avalonia.ProjectM
 
-**ProjectM.Avalonia** is a fully self-contained library for Avalonia UI applications that provides high-performance, OpenGL-accelerated audio visualizations via the [libprojectM](https://github.com/projectM-visualizer/projectm) engine.
+**Avalonia.ProjectM** is a fully self-contained library for Avalonia UI applications that provides high-performance, OpenGL-accelerated audio visualizations via the [libprojectM](https://github.com/projectM-visualizer/projectm) engine.
 
 It provides a plug-and-play solution for integrating stunning, music-reactive visuals into any compatible Avalonia application. Included in this repository is the complete suite of native bindings and a massive library of `.milk` presets and textures, ensuring you have an endless variety of dynamic visuals instantly available.
 
@@ -21,7 +21,7 @@ This library targets **.NET 10.0** and relies on the following core frameworks:
 * **Avalonia UI** (v12.x) for the cross-platform rendering engine.
 * **Silk.NET.OpenGL** (v2.x) for hardware-accelerated OpenGL context bindings.
 
-The native `libprojectM` binaries (and the **GLEW** extension wrangler `glew32.dll` on Windows) are required at runtime. They must reside in the same folder as the compiled assembly (`ProjectM.Avalonia.dll`) inside your deployment directory.
+The native `libprojectM` binaries (and the **GLEW** extension wrangler `glew32.dll` on Windows) are required at runtime. They must reside in the same folder as the compiled assembly (`Avalonia.ProjectM.dll`) inside your deployment directory.
 
 ---
 
@@ -29,7 +29,7 @@ The native `libprojectM` binaries (and the **GLEW** extension wrangler `glew32.d
 
 ```
 <projm-av-root>/
-├── ProjectM.Avalonia.csproj        # Managed control library project
+├── Avalonia.ProjectM.csproj        # Managed control library project
 ├── Controls/
 │   └── ProjectMControl.cs          # Avalonia OpenGlControlBase wrapper
 ├── Native/
@@ -93,15 +93,15 @@ Both scripts produce the standard staged folder structure under `./publish/stage
 
 ```text
 publish/stage/
-└── ProjectM.Avalonia/
-    ├── ProjectM.Avalonia.dll       # Managed control library
-    ├── ProjectM.Avalonia.deps.json # Dependency manifest
+└── Avalonia.ProjectM/
+    ├── Avalonia.ProjectM.dll       # Managed control library
+    ├── Avalonia.ProjectM.deps.json # Dependency manifest
     ├── libprojectM.dll             (Windows native library)
     ├── libprojectM.so.4            (Linux native library)
     └── glew32.dll                  (Windows only native dependency)
 ```
 
-A `ProjectM-Avalonia-<platform>.zip` is produced inside `./publish/` for easy distribution. When unzipped in your host application's output directory, it creates the standalone `ProjectM.Avalonia/` directory containing all library assets.
+A `ProjectM-Avalonia-<platform>.zip` is produced inside `./publish/` for easy distribution. When unzipped in your host application's output directory, it creates the standalone `Avalonia.ProjectM/` directory containing all library assets.
 
 ### Staging Build (Windows)
 ```powershell
@@ -120,13 +120,13 @@ A `ProjectM-Avalonia-<platform>.zip` is produced inside `./publish/` for easy di
 To integrate `ProjectMControl` directly into your Avalonia application:
 
 ### 1. Reference the Library
-Add `ProjectM.Avalonia` project to your solution, or directly reference the compiled `ProjectM.Avalonia.dll` assembly.
+Add `Avalonia.ProjectM` project to your solution, or directly reference the compiled `Avalonia.ProjectM.dll` assembly.
 
 ### 2. Add the XAML Namespace
 At the top of your Avalonia Window or UserControl (`.axaml` file), include the controls namespace:
 
 ```xml
-xmlns:vis="clr-namespace:ProjectM.Avalonia.Controls;assembly=ProjectM.Avalonia"
+xmlns:vis="clr-namespace:Avalonia.ProjectM.Controls;assembly=Avalonia.ProjectM"
 ```
 
 ### 3. Drop in the Control
