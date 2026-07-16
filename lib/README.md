@@ -24,8 +24,8 @@ upstream commit, and LICENSE files are bundled.
 1. Go to: https://github.com/RobG66/Avalonia.ProjectM/releases
 2. Find the latest "Native dependencies" release.
 3. Download the asset for your platform:
-   - Windows: `libprojectM-win-x64.zip`
-   - Linux:   `libprojectM-linux-x64.tar.gz`
+   - Windows: `Avalonia.ProjectM-win-x64.zip`
+   - Linux:   `Avalonia.ProjectM-linux-x64.tar.gz`
 4. Extract the archive into this `lib/` folder. The archive contains:
    - `libprojectM.dll` (Windows) or `libprojectM.so.4` (Linux)
    - `glew32.dll` (Windows only)

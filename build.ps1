@@ -55,7 +55,7 @@ if (-not $libPopulated) {
     Write-Host "" -ForegroundColor Yellow
     Write-Host "         To populate lib/:" -ForegroundColor Yellow
     Write-Host "           1. Go to https://github.com/RobG66/Avalonia.ProjectM/releases" -ForegroundColor Yellow
-    Write-Host "           2. Download libprojectM-win-x64.zip (or libprojectM-linux-x64.tar.gz)" -ForegroundColor Yellow
+    Write-Host "           2. Download Avalonia.ProjectM-win-x64.zip (or Avalonia.ProjectM-linux-x64.tar.gz)" -ForegroundColor Yellow
     Write-Host "           3. Extract into lib/" -ForegroundColor Yellow
     Write-Host "         See lib/README.md for details." -ForegroundColor Yellow
     Write-Host ""

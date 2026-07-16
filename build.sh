@@ -45,7 +45,7 @@ if [[ "$lib_populated" != "true" ]]; then
     echo ""
     echo "         To populate lib/:"
     echo "           1. Go to https://github.com/RobG66/Avalonia.ProjectM/releases"
-    echo "           2. Download libprojectM-win-x64.zip (or libprojectM-linux-x64.tar.gz)"
+    echo "           2. Download Avalonia.ProjectM-win-x64.zip (or Avalonia.ProjectM-linux-x64.tar.gz)"
     echo "           3. Extract into lib/"
     echo "         See lib/README.md for details."
     echo ""

@@ -60,8 +60,8 @@ The `lib/` folder must be populated with `libprojectM.dll` / `libprojectM.so.4` 
 1. Go to your repository's Releases page on GitHub.
 2. Find the latest **Native dependencies** release.
 3. Download the asset for your platform:
-   - Windows: `libprojectM-win-x64.zip`
-   - Linux:   `libprojectM-linux-x64.tar.gz`
+   - Windows: `Avalonia.ProjectM-win-x64.zip`
+   - Linux:   `Avalonia.ProjectM-linux-x64.tar.gz`
 4. Extract into the `lib/` folder at the root of this repo. The archive extracts flat — you should end up with:
    - `lib/libprojectM.dll` (Windows) or `lib/libprojectM.so.4` (Linux)
    - `lib/glew32.dll` (Windows only)

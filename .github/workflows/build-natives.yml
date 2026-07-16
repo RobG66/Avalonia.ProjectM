@@ -26,7 +26,7 @@
 # ── How to use the output ────────────────────────────────────────────
 # After this workflow runs successfully:
 #   1. Go to the Avalonia.ProjectM repo's Releases page on GitHub.
-#   2. You'll find natives-win-x64.zip, natives-linux-x64.tar.gz, and
+#   2. You'll find Avalonia.ProjectM-win-x64.zip, Avalonia.ProjectM-linux-x64.tar.gz, and
 #      checksums.sha256 attached to the release.
 #   3. Compute the SHA-256 of each archive (or read it from
 #      checksums.sha256).
