@@ -1,7 +1,10 @@
 bin/
 obj/
 publish/
-AGENTS.md/
+.AGENTS/
 *.ps1
 *.sh
 .idea/
+.vs/
+AGENTS.md
+PROJECT_CONTEXT.md
