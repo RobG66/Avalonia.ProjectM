@@ -21,6 +21,9 @@ public class ProjectMControl : OpenGlControlBase
     /// </summary>
     private const int MaxPcmSamplesPerChannelPerCall = 480;
 
+    private short[] _pcmBuffer = new short[17640];
+    private readonly short[] _chunkBuffer = new short[MaxPcmSamplesPerChannelPerCall * 2];
+
     private IntPtr _projectMHandle;
     private readonly ConcurrentQueue<short> _audioBuffer = new();
     private readonly System.Diagnostics.Stopwatch _renderStopwatch = new();
@@ -142,9 +145,9 @@ public class ProjectMControl : OpenGlControlBase
             _audioBuffer.Enqueue(samples[i]);
         }
 
-        // Limit the maximum size of the queue to 1 second of audio at 44100Hz stereo
-        // (88200 shorts) to prevent memory leak if rendering is paused or slowed down.
-        const int maxBufferSize = 88200;
+        // Limit maximum queue size to ~50ms of audio at 44.1kHz stereo (4410 shorts)
+        // to prevent audio latency lag relative to GL rendering frames.
+        const int maxBufferSize = 4410;
         while (_audioBuffer.Count > maxBufferSize)
         {
             _audioBuffer.TryDequeue(out _);
@@ -311,36 +314,37 @@ public class ProjectMControl : OpenGlControlBase
 
             if (shortsToFeed > 0)
             {
-                var samples = new short[shortsToFeed];
-                int actualDequeued = 0;
+                if (_pcmBuffer.Length < shortsToFeed)
+                {
+                    _pcmBuffer = new short[shortsToFeed * 2];
+                }
+
                 for (int i = 0; i < shortsToFeed; i++)
                 {
                     if (_audioBuffer.TryDequeue(out short s))
                     {
-                        samples[i] = s;
-                        actualDequeued++;
+                        _pcmBuffer[i] = s;
                     }
                     else
                     {
                         // Buffer underrun or playback paused: pad with silence
-                        samples[i] = 0;
+                        _pcmBuffer[i] = 0;
                     }
                 }
 
                 // Feed to projectM, chunking to max 480 samples/channel (960 shorts) per call
                 int maxShortsPerCall = MaxPcmSamplesPerChannelPerCall * channels; // 960
                 int offset = 0;
-                while (offset < actualDequeued)
+                while (offset < shortsToFeed)
                 {
-                    int len = Math.Min(maxShortsPerCall, actualDequeued - offset);
+                    int len = Math.Min(maxShortsPerCall, shortsToFeed - offset);
                     len = (len / channels) * channels; // align to stereo pair
                     if (len <= 0) break;
 
-                    var chunk = new short[len];
-                    Array.Copy(samples, offset, chunk, 0, len);
+                    Array.Copy(_pcmBuffer, offset, _chunkBuffer, 0, len);
 
                     ProjectMNative.projectm_pcm_add_int16(
-                        _projectMHandle, chunk,
+                        _projectMHandle, _chunkBuffer,
                         (uint)len / 2, ProjectMChannels.Stereo);
 
                     offset += len;
