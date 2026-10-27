@@ -52,6 +52,8 @@ public class ProjectMControl : OpenGlControlBase
     // redundant second load.
     private string? _lastLoadedPresetPath;
     private string? _lastLoadedPresetContent;
+    private string? _presetTextureDirectory;
+    private string? _sharedTextureDirectory;
 
     // GL function delegates resolved via GetProcAddress — Avalonia's
     // GlInterface only exposes a minimal subset; we need these extras
@@ -417,6 +419,8 @@ public class ProjectMControl : OpenGlControlBase
         if (string.Equals(_lastLoadedPresetPath, presetPath, StringComparison.OrdinalIgnoreCase))
             return;
 
+        SetTextureSearchPaths(System.IO.Path.GetDirectoryName(presetPath));
+
         if (ProjectMNative.projectm_load_preset_data != null)
         {
             try
@@ -651,6 +655,10 @@ public class ProjectMControl : OpenGlControlBase
 
                     ProjectMNative.projectm_set_fps(_projectMHandle, 60);
 
+                    // The host owns preset selection and randomization. Explicit
+                    // LoadPreset calls still work while automatic transitions are locked.
+                    ProjectMNative.projectm_set_preset_locked(_projectMHandle, true);
+
                     // FIXED (Issue 9): apply RenderScaling to the initial
                     // window size. The previous code used Bounds.Width/Height
                     // without scaling, causing projectM to render at the
@@ -673,12 +681,9 @@ public class ProjectMControl : OpenGlControlBase
                             texturesPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ProjectM", "textures");
                         }
 
-                        if (System.IO.Directory.Exists(texturesPath))
-                        {
-                            IntPtr ptr = Marshal.StringToHGlobalAnsi(texturesPath);
-                            ProjectMNative.projectm_set_texture_search_paths(_projectMHandle, new IntPtr[] { ptr }, 1);
-                            Marshal.FreeHGlobal(ptr);
-                        }
+                        _sharedTextureDirectory = System.IO.Directory.Exists(texturesPath) ? texturesPath : null;
+                        _presetTextureDirectory = null;
+                        SetTextureSearchPaths(null);
                     }
                 }
             }
@@ -686,6 +691,32 @@ public class ProjectMControl : OpenGlControlBase
         catch (Exception ex)
         {
             Console.WriteLine($"ProjectM Init Error: {ex}");
+        }
+    }
+
+    private void SetTextureSearchPaths(string? presetDirectory)
+    {
+        if (ProjectMNative.projectm_set_texture_search_paths == null) return;
+        if (presetDirectory != null && string.Equals(_presetTextureDirectory, presetDirectory, StringComparison.Ordinal))
+            return;
+
+        // Preset-local textures (including Favorites) stay beside their preset.
+        // The shared texture pack remains available as a fallback.
+        var paths = new System.Collections.Generic.List<string>();
+        if (!string.IsNullOrEmpty(presetDirectory)) paths.Add(presetDirectory);
+        if (_sharedTextureDirectory != null && _sharedTextureDirectory != presetDirectory)
+            paths.Add(_sharedTextureDirectory);
+        var pointers = new IntPtr[paths.Count];
+        try
+        {
+            for (int i = 0; i < paths.Count; i++) pointers[i] = Marshal.StringToCoTaskMemUTF8(paths[i]);
+            ProjectMNative.projectm_set_texture_search_paths(_projectMHandle, pointers, (nuint)pointers.Length);
+            _presetTextureDirectory = presetDirectory;
+        }
+        finally
+        {
+            foreach (var pointer in pointers)
+                if (pointer != IntPtr.Zero) Marshal.FreeCoTaskMem(pointer);
         }
     }
     #endregion

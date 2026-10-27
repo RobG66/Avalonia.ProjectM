@@ -165,6 +165,7 @@ public static class ProjectMNative
 
         projectm_load_preset_file = GetDelegate<projectm_load_preset_file_delegate>("projectm_load_preset_file", false);
         projectm_load_preset_data = GetDelegate<projectm_load_preset_data_delegate>("projectm_load_preset_data", false);
+        projectm_set_preset_locked = GetDelegate<projectm_set_preset_locked_delegate>("projectm_set_preset_locked");
         projectm_write_debug_image_on_next_frame = GetDelegate<projectm_write_debug_image_on_next_frame_delegate>("projectm_write_debug_image_on_next_frame", false);
     }
 
@@ -268,6 +269,12 @@ public static class ProjectMNative
         IntPtr data,
         [MarshalAs(UnmanagedType.I1)] bool smooth_transition);
     public static projectm_load_preset_data_delegate projectm_load_preset_data { get; private set; } = null!;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void projectm_set_preset_locked_delegate(
+        IntPtr handle,
+        [MarshalAs(UnmanagedType.I1)] bool locked);
+    public static projectm_set_preset_locked_delegate projectm_set_preset_locked { get; private set; } = null!;
 
     // FIXED (Issue 13): added the missing `output_file` parameter.
     // C API: void projectm_write_debug_image_on_next_frame(projectm_handle, const char* output_file);
